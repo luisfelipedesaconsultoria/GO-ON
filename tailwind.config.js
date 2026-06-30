@@ -11,7 +11,7 @@ export default {
         lime: "#C8F562",
         coral: "#FF6B4A",
         cream: "#FAFAF7",
-        stone: "#8A8F8B",
+        stone: "#6B716C",
         amber: "#E8A23D",
       },
       fontFamily: {
@@ -26,4 +26,4 @@ export default {
     },
   },
   plugins: [],
-}
+};

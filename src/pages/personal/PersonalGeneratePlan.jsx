@@ -1,8 +1,8 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { getStudent, createPeriodizationProposal, approvePeriodization } from "../../lib/db";
-import { ForestButton, OutlineButton, Badge } from "../../components/ui";
+import { ForestButton, OutlineButton, Badge, Spinner, Skeleton } from "../../components/ui";
 import { ChevronLeft, Sparkles, CheckCircle2, Zap, FileText } from "lucide-react";
 
 // ---- Motor de geração simulado ----
@@ -63,19 +63,49 @@ export default function PersonalGeneratePlan() {
   const navigate = useNavigate();
   const student = getStudent(studentId);
   const [approved, setApproved] = useState(false);
+  const [approving, setApproving] = useState(false);
+  const [generating, setGenerating] = useState(true);
   const plan = useMemo(() => (student ? generatePeriodization(student) : null), [student]);
 
-  if (!student || !plan) return <div className="p-8">Aluno não encontrado.</div>;
+  useEffect(() => {
+    const t = setTimeout(() => setGenerating(false), 900);
+    return () => clearTimeout(t);
+  }, []);
+
+  if (!student || !plan) return <div className="p-4 md:p-8">Aluno não encontrado.</div>;
 
   const handleApprove = () => {
-    const proposal = createPeriodizationProposal(studentId, plan.blocks, plan.reasoning);
-    approvePeriodization(proposal.id);
-    setApproved(true);
-    setTimeout(() => navigate(`/personal/alunos/${studentId}`), 1200);
+    setApproving(true);
+    setTimeout(() => {
+      const proposal = createPeriodizationProposal(studentId, plan.blocks, plan.reasoning);
+      approvePeriodization(proposal.id);
+      setApproving(false);
+      setApproved(true);
+      setTimeout(() => navigate(`/personal/alunos/${studentId}`), 1200);
+    }, 600);
   };
 
+  if (generating) {
+    return (
+      <div className="p-4 md:p-8 max-w-2xl">
+        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-stone mb-4">
+          <ChevronLeft size={16} /> Voltar
+        </button>
+        <div className="flex items-center gap-2 mb-1">
+          <Sparkles size={18} className="text-forest animate-pulse" />
+          <p className="font-display font-black text-xl text-ink">Gerando periodização · {student.name}</p>
+        </div>
+        <p className="text-sm text-stone mb-6">Analisando anamnese, avaliação física e objetivo...</p>
+        <Skeleton className="h-24 w-full mb-4" />
+        <Skeleton className="h-16 w-full mb-2" />
+        <Skeleton className="h-16 w-full mb-2" />
+        <Skeleton className="h-16 w-full" />
+      </div>
+    );
+  }
+
   return (
-    <div className="p-8 max-w-2xl">
+    <div className="p-4 md:p-8 max-w-2xl page-enter">
       <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-stone mb-4">
         <ChevronLeft size={16} /> Voltar
       </button>
@@ -122,8 +152,8 @@ export default function PersonalGeneratePlan() {
 
       <div className="flex gap-3">
         <OutlineButton onClick={() => navigate(-1)} className="flex-1">Editar manualmente</OutlineButton>
-        <ForestButton onClick={handleApprove} icon={CheckCircle2} className="flex-1" disabled={approved}>
-          {approved ? "Aprovado!" : "Aprovar plano"}
+        <ForestButton onClick={handleApprove} icon={approving ? undefined : CheckCircle2} className="flex-1" disabled={approved || approving}>
+          {approving ? <span className="flex items-center gap-2"><Spinner size={15} color="white" /> Aprovando...</span> : approved ? "Aprovado!" : "Aprovar plano"}
         </ForestButton>
       </div>
     </div>

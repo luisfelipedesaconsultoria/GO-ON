@@ -11,11 +11,11 @@ export default function AdminOverview() {
   const mrr = tenants.filter((t) => t.plan === "active").reduce((acc, t) => acc + t.subscriptionPrice, 0);
 
   return (
-    <div className="p-8 max-w-6xl">
+    <div className="p-4 md:p-8 max-w-6xl">
       <p className="font-display font-black text-2xl text-ink mb-1">Visão geral da plataforma</p>
       <p className="text-sm text-stone mb-7">Métricas consolidadas de todos os personals cadastrados</p>
 
-      <div className="grid grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <Card className="p-5">
           <Building2 size={18} className="text-forest mb-2" />
           <p className="text-3xl font-black text-ink">{tenants.length}</p>
@@ -38,7 +38,7 @@ export default function AdminOverview() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="col-span-2">
           <p className="font-black text-sm text-ink mb-3">Personals recentes</p>
           <Card className="overflow-hidden">

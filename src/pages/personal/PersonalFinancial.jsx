@@ -8,14 +8,14 @@ export default function PersonalFinancial() {
   const { tenant } = useAuth();
   const fin = getFinancials(tenant.id);
 
-  if (!fin) return <div className="p-8">Sem dados financeiros.</div>;
+  if (!fin) return <div className="p-4 md:p-8">Sem dados financeiros.</div>;
 
   return (
-    <div className="p-8 max-w-4xl">
+    <div className="p-4 md:p-8 max-w-4xl">
       <p className="font-display font-black text-2xl text-ink mb-1">Financeiro</p>
       <p className="text-sm text-stone mb-7">Gestão de receitas e custos da sua operação</p>
 
-      <Card className="p-6 mb-6" style={{ background: "#0D0F0E" }} dark>
+      <Card className="p-6 mb-6" dark style={{ background: "#0D0F0E" }}>
         <div className="flex items-center justify-between mb-1">
           <p className="text-xs font-bold uppercase text-white/50">Receita total · junho 2026</p>
           <span className="flex items-center gap-1 text-xs font-bold text-lime"><ArrowUp size={12} /> {fin.monthlyGrowth}%</span>
@@ -23,7 +23,7 @@ export default function PersonalFinancial() {
         <p className="text-3xl font-black text-white">R$ {fin.monthlyRevenue.toLocaleString("pt-BR")}</p>
       </Card>
 
-      <div className="grid grid-cols-4 gap-4 mb-7">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-7">
         <Card className="p-4">
           <p className="text-[10px] font-bold uppercase text-stone mb-1">Mensalidades</p>
           <p className="text-lg font-black text-ink">R$ {fin.monthlySubscriptions.toLocaleString("pt-BR")}</p>

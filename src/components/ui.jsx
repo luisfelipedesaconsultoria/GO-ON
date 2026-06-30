@@ -20,7 +20,7 @@ export function ProgressRing({ pct, size = 60, stroke = 6, color = "#C8F562", tr
     <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
       <circle cx={size / 2} cy={size / 2} r={r} stroke={track} strokeWidth={stroke} fill="none" />
       <circle cx={size / 2} cy={size / 2} r={r} stroke={color} strokeWidth={stroke} fill="none"
-        strokeDasharray={c} strokeDashoffset={offset} strokeLinecap="round" />
+        strokeDasharray={c} strokeDashoffset={offset} strokeLinecap="round" className="progress-ring-circle" />
     </svg>
   );
 }
@@ -37,11 +37,11 @@ export function Badge({ children, color = "#0B5A28", bg = "#E3F0E6" }) {
   );
 }
 
-export function Card({ children, className = "", dark = false }) {
+export function Card({ children, className = "", dark = false, style = {} }) {
   return (
     <div
       className={`rounded-2xl border ${dark ? "border-white/10" : "border-black/6"} ${className}`}
-      style={{ background: dark ? "rgba(255,255,255,0.06)" : "white" }}
+      style={{ background: dark ? "rgba(255,255,255,0.06)" : "white", ...style }}
     >
       {children}
     </div>
@@ -100,4 +100,17 @@ export function Avatar({ initials, size = 40, color = "#0B5A28" }) {
       {initials}
     </div>
   );
+}
+
+export function Spinner({ size = 16, color = "currentColor" }) {
+  return (
+    <svg className="spin" width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="2.5" opacity="0.25" />
+      <path d="M21 12a9 9 0 0 0-9-9" stroke={color} strokeWidth="2.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function Skeleton({ className = "" }) {
+  return <div className={`skeleton rounded-lg ${className}`} />;
 }

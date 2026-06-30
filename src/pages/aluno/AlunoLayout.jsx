@@ -2,6 +2,7 @@ import React from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { getStudent } from "../../lib/db";
+import { getBrandScale } from "../../lib/colorUtils";
 import { Logo } from "../../components/ui";
 import { Dumbbell, Activity, TrendingUp, MessageSquare, LogOut, ClipboardList } from "lucide-react";
 
@@ -18,38 +19,45 @@ export default function AlunoLayout() {
   const navigate = useNavigate();
   const student = getStudent(user.studentId);
   const brandColor = tenant?.brandColor || "#0B5A28";
+  const appName = tenant?.appName || "Personal de Sucesso";
+  const logoUrl = tenant?.logoUrl || null;
+  const colors = getBrandScale(brandColor);
 
   const isBlocked = student?.subscriptionStatus === "overdue";
 
   return (
-    <div className="min-h-screen bg-ink pb-20">
+    <div className="min-h-screen bg-white pb-24">
       <div className="max-w-md mx-auto">
         <div className="flex items-center justify-between px-5 pt-5 pb-2">
           <div className="flex items-center gap-2">
-            <Logo size={24} color={brandColor} />
-            <span className="text-white font-black text-xs">{tenant?.appName}</span>
+            {logoUrl ? (
+              <img src={logoUrl} alt={appName} className="w-6 h-6 rounded-md object-cover" />
+            ) : (
+              <Logo size={24} color={brandColor} />
+            )}
+            <span className="text-ink font-black text-xs">{appName}</span>
           </div>
           <button onClick={() => { logout(); navigate("/"); }}>
-            <LogOut size={16} className="text-white/40" />
+            <LogOut size={16} className="text-stone" />
           </button>
         </div>
 
-        <Outlet context={{ student, isBlocked, brandColor }} />
+        <Outlet context={{ student, isBlocked, brandColor, appName, logoUrl, colors }} />
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-ink border-t border-white/10 px-4 py-3 flex justify-around max-w-md mx-auto">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-black/8 px-4 py-3 flex justify-around max-w-md mx-auto">
         {navItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             end={item.end}
-            className={({ isActive }) => `flex flex-col items-center gap-1`}
-            style={({ isActive }) => ({ color: isActive ? brandColor : "rgba(255,255,255,0.35)" })}
+            className={() => `flex flex-col items-center gap-1`}
+            style={({ isActive }) => ({ color: isActive ? brandColor : "#8A8F8B" })}
           >
             {({ isActive }) => (
               <>
-                <item.icon size={20} style={{ color: isActive ? brandColor : "rgba(255,255,255,0.35)" }} />
-                <span className="text-[10px] font-bold" style={{ color: isActive ? brandColor : "rgba(255,255,255,0.35)" }}>{item.label}</span>
+                <item.icon size={20} style={{ color: isActive ? brandColor : "#8A8F8B" }} />
+                <span className="text-[10px] font-bold" style={{ color: isActive ? brandColor : "#8A8F8B" }}>{item.label}</span>
               </>
             )}
           </NavLink>
