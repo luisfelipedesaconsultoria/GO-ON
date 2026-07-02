@@ -33,18 +33,38 @@ import AlunoAssessments from "./pages/aluno/AlunoAssessments";
 import AlunoChat from "./pages/aluno/AlunoChat";
 
 function RequireRole({ role, children }) {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F3F3EE]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 rounded-full border-4 border-forest border-t-transparent animate-spin" />
+          <p className="text-sm text-stone font-medium">Carregando...</p>
+        </div>
+      </div>
+    );
   if (!user) return <Navigate to="/" replace />;
   if (user.role !== role) return <Navigate to="/" replace />;
   return children;
 }
+const { user } = useAuth();
+if (!user) return <Navigate to="/" replace />;
+if (user.role !== role) return <Navigate to="/" replace />;
+return children;
 
 function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Login />} />
 
-      <Route path="/admin" element={<RequireRole role="admin"><AdminLayout /></RequireRole>}>
+      <Route
+        path="/admin"
+        element={
+          <RequireRole role="admin">
+            <AdminLayout />
+          </RequireRole>
+        }
+      >
         <Route index element={<AdminOverview />} />
         <Route path="tenants" element={<AdminTenants />} />
         <Route path="billing" element={<AdminBilling />} />
@@ -52,12 +72,22 @@ function AppRoutes() {
         <Route path="settings" element={<AdminSettings />} />
       </Route>
 
-      <Route path="/personal" element={<RequireRole role="personal"><PersonalLayout /></RequireRole>}>
+      <Route
+        path="/personal"
+        element={
+          <RequireRole role="personal">
+            <PersonalLayout />
+          </RequireRole>
+        }
+      >
         <Route index element={<PersonalDashboard />} />
         <Route path="alunos" element={<PersonalStudents />} />
         <Route path="alunos/novo" element={<PersonalStudentNew />} />
         <Route path="alunos/:studentId" element={<PersonalStudentDetail />} />
-        <Route path="alunos/:studentId/gerar-plano" element={<PersonalGeneratePlan />} />
+        <Route
+          path="alunos/:studentId/gerar-plano"
+          element={<PersonalGeneratePlan />}
+        />
         <Route path="treinos" element={<PersonalWorkoutLibrary />} />
         <Route path="videos" element={<PersonalVideoReview />} />
         <Route path="chat" element={<PersonalChat />} />
@@ -65,7 +95,14 @@ function AppRoutes() {
         <Route path="configuracoes" element={<PersonalSettings />} />
       </Route>
 
-      <Route path="/aluno" element={<RequireRole role="aluno"><AlunoLayout /></RequireRole>}>
+      <Route
+        path="/aluno"
+        element={
+          <RequireRole role="aluno">
+            <AlunoLayout />
+          </RequireRole>
+        }
+      >
         <Route index element={<AlunoToday />} />
         <Route path="exercicio/:exerciseId" element={<AlunoExerciseDetail />} />
         <Route path="feedback-treino" element={<AlunoWorkoutFeedback />} />
