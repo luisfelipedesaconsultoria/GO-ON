@@ -38,7 +38,7 @@ export default function PersonalStudentNew() {
 
   const update = (field, value) => setForm((f) => ({ ...f, [field]: value }));
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const initials =
       form.name
         .split(" ")
@@ -46,7 +46,7 @@ export default function PersonalStudentNew() {
         .slice(0, 2)
         .join("")
         .toUpperCase() || "??";
-    const student = createStudent(tenant.id, {
+    const student = await createStudent(tenant.id, {
       name: form.name,
       initials,
       email: form.email,

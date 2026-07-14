@@ -61,24 +61,49 @@ function generatePeriodization(student) {
 export default function PersonalGeneratePlan() {
   const { studentId } = useParams();
   const navigate = useNavigate();
-  const student = getStudent(studentId);
+  const [student, setStudent] = useState(null);
+  const [loadingStudent, setLoadingStudent] = useState(true);
   const [approved, setApproved] = useState(false);
   const [approving, setApproving] = useState(false);
   const [generating, setGenerating] = useState(true);
   const plan = useMemo(() => (student ? generatePeriodization(student) : null), [student]);
 
   useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoadingStudent(true);
+      const s = await getStudent(studentId);
+      if (!cancelled) {
+        setStudent(s);
+        setLoadingStudent(false);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [studentId]);
+
+  useEffect(() => {
     const t = setTimeout(() => setGenerating(false), 900);
     return () => clearTimeout(t);
   }, []);
 
+  if (loadingStudent) {
+    return (
+      <div className="p-4 md:p-8 max-w-2xl flex items-center justify-center min-h-[40vh]">
+        <Spinner size={24} />
+      </div>
+    );
+  }
+
   if (!student || !plan) return <div className="p-4 md:p-8">Aluno não encontrado.</div>;
 
-  const handleApprove = () => {
+  const handleApprove = async () => {
     setApproving(true);
-    setTimeout(() => {
-      const proposal = createPeriodizationProposal(studentId, plan.blocks, plan.reasoning);
-      approvePeriodization(proposal.id);
+    setTimeout(async () => {
+      const proposal = await createPeriodizationProposal(studentId, plan.blocks, plan.reasoning);
+      if (proposal?.id) await approvePeriodization(proposal.id);
       setApproving(false);
       setApproved(true);
       setTimeout(() => navigate(`/personal/alunos/${studentId}`), 1200);

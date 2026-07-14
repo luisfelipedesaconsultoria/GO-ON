@@ -47,10 +47,6 @@ function RequireRole({ role, children }) {
   if (user.role !== role) return <Navigate to="/" replace />;
   return children;
 }
-const { user } = useAuth();
-if (!user) return <Navigate to="/" replace />;
-if (user.role !== role) return <Navigate to="/" replace />;
-return children;
 
 function AppRoutes() {
   return (

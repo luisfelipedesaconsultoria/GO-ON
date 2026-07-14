@@ -1,29 +1,66 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { getStudents, getChatThread, sendChatMessage } from "../../lib/db";
-import { Avatar } from "../../components/ui";
+import { Avatar, Spinner } from "../../components/ui";
 import { Send, Sparkles, AlertTriangle, MessageSquare } from "lucide-react";
 
 export default function PersonalChat() {
   const { tenant } = useAuth();
-  const students = getStudents(tenant.id);
-  const [activeId, setActiveId] = useState(students[0]?.id);
-  const [thread, setThread] = useState(() => getChatThread(activeId));
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeId, setActiveId] = useState(null);
+  const [thread, setThread] = useState([]);
+  const [previews, setPreviews] = useState({});
   const [text, setText] = useState("");
 
-  const selectStudent = (id) => {
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      const s = await getStudents(tenant.id);
+      if (cancelled) return;
+      setStudents(s);
+      setLoading(false);
+      const firstId = s[0]?.id || null;
+      setActiveId(firstId);
+      const previewEntries = await Promise.all(
+        s.map(async (st) => [st.id, await getChatThread(st.id)])
+      );
+      if (cancelled) return;
+      setPreviews(Object.fromEntries(previewEntries));
+      if (firstId) setThread(previewEntries.find(([id]) => id === firstId)?.[1] || []);
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [tenant.id]);
+
+  const selectStudent = async (id) => {
     setActiveId(id);
-    setThread(getChatThread(id));
+    const t = await getChatThread(id);
+    setThread(t);
+    setPreviews((p) => ({ ...p, [id]: t }));
   };
 
-  const handleSend = () => {
-    if (!text.trim()) return;
-    sendChatMessage(activeId, text, "personal");
-    setThread(getChatThread(activeId));
+  const handleSend = async () => {
+    if (!text.trim() || !activeId) return;
+    await sendChatMessage(activeId, text, "personal");
+    const t = await getChatThread(activeId);
+    setThread(t);
+    setPreviews((p) => ({ ...p, [activeId]: t }));
     setText("");
   };
 
   const activeStudent = students.find((s) => s.id === activeId);
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Spinner size={24} />
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen">
@@ -32,7 +69,7 @@ export default function PersonalChat() {
           <p className="font-display font-black text-lg text-ink">Mensagens</p>
         </div>
         {students.map((s) => {
-          const t = getChatThread(s.id);
+          const t = previews[s.id] || [];
           const lastMsg = t[t.length - 1];
           const hasEscalation = t.some((m) => m.escalated);
           return (

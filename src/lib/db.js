@@ -383,10 +383,10 @@ export async function submitVideoForReview(studentId, exerciseName) {
   });
 }
 
-export async function approveVideoReview(reviewId) {
+export async function resolveVideoReview(reviewId, status = "approved") {
   await supabase
     .from("video_review_queue")
-    .update({ status: "approved" })
+    .update({ status })
     .eq("id", reviewId);
 }
 

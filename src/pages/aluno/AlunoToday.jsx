@@ -1,17 +1,43 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useOutletContext, useNavigate } from "react-router-dom";
 import { getAssignedWorkout } from "../../lib/db";
-import { ProgressRing } from "../../components/ui";
+import { ProgressRing, Spinner } from "../../components/ui";
 import { CheckCircle2, Play, Circle, Award } from "lucide-react";
 import BlockedScreen from "./BlockedScreen";
 
 export default function AlunoToday() {
   const { student, isBlocked, brandColor, colors } = useOutletContext();
   const navigate = useNavigate();
+  const [workout, setWorkout] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!student || isBlocked) return;
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      const w = await getAssignedWorkout(student.id);
+      if (!cancelled) {
+        setWorkout(w);
+        setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [student, isBlocked]);
 
   if (isBlocked) return <BlockedScreen student={student} brandColor={brandColor} colors={colors} />;
 
-  const workout = getAssignedWorkout(student.id);
+  if (loading) {
+    return (
+      <div className="px-5 pt-10 flex items-center justify-center">
+        <Spinner size={24} color={brandColor} />
+      </div>
+    );
+  }
+
   if (!workout) {
     return (
       <div className="px-5 pt-10 text-center">

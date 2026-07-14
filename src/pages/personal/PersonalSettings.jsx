@@ -12,8 +12,8 @@ export default function PersonalSettings() {
   const [brandColor, setBrandColor] = useState(tenant.brandColor);
   const [saved, setSaved] = useState(false);
 
-  const handleSave = () => {
-    updateTenant(tenant.id, { appName, brandColor });
+  const handleSave = async () => {
+    await updateTenant(tenant.id, { appName, brandColor });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
     window.location.reload();
