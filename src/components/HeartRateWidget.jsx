@@ -1,16 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { Bluetooth, BluetoothConnected, Flame, Timer, BatteryMedium, WifiOff } from "lucide-react";
 import { useHeartRateMonitor } from "../hooks/useHeartRateMonitor";
-
-function formatDuration(sec) {
-  const m = Math.floor(sec / 60)
-    .toString()
-    .padStart(2, "0");
-  const s = Math.floor(sec % 60)
-    .toString()
-    .padStart(2, "0");
-  return `${m}:${s}`;
-}
+import { formatDuration } from "../lib/format";
 
 // Widget de conexão + leitura ao vivo de um bracelete Bluetooth.
 // onTick(bpm, calories, zone, elapsedSec) dispara a cada nova leitura —
