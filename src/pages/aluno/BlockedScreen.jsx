@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { getChatThread, sendChatMessage } from "../../lib/db";
 import { Send, Sparkles, AlertTriangle, MessageSquare } from "lucide-react";
@@ -6,15 +6,29 @@ import BlockedScreen from "./BlockedScreen";
 
 export default function AlunoChat() {
   const { student, isBlocked, brandColor, colors } = useOutletContext();
-  const [thread, setThread] = useState(() => getChatThread(student.id));
+  const [thread, setThread] = useState([]);
+
+  useEffect(() => {
+    if (!student) return;
+    let cancelled = false;
+    async function load() {
+      const t = await getChatThread(student.id);
+      if (!cancelled) setThread(t);
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [student]);
   const [text, setText] = useState("");
 
   if (isBlocked) return <BlockedScreen student={student} brandColor={brandColor} colors={colors} />;
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!text.trim()) return;
-    sendChatMessage(student.id, text, "student");
-    setThread(getChatThread(student.id));
+    await sendChatMessage(student.id, text, "student");
+    const t = await getChatThread(student.id);
+    setThread(t);
     setText("");
   };
 

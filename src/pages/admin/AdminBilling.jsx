@@ -1,12 +1,38 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { getAllTenants } from "../../lib/db";
-import { Card } from "../../components/ui";
+import { Card, Spinner } from "../../components/ui";
 import { TrendingUp, DollarSign } from "lucide-react";
 
 export default function AdminBilling() {
-  const tenants = getAllTenants();
+  const [tenants, setTenants] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      const data = await getAllTenants();
+      if (!cancelled) {
+        setTenants(data);
+        setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const active = tenants.filter((t) => t.plan === "active");
   const mrr = active.reduce((acc, t) => acc + t.subscriptionPrice, 0);
+
+  if (loading) {
+    return (
+      <div className="p-4 md:p-8 max-w-6xl flex items-center justify-center min-h-[40vh]">
+        <Spinner size={24} />
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 md:p-8 max-w-6xl">

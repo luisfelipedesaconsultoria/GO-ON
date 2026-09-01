@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { getWorkoutTemplates, duplicateWorkoutTemplate, assignTemplateToStudents, getStudents } from "../../lib/db";
 import { Card, ForestButton, OutlineButton, Spinner } from "../../components/ui";
@@ -7,21 +7,38 @@ import { Library, Copy, Send, FolderPlus, CheckCircle2, Circle, X } from "lucide
 export default function PersonalWorkoutLibrary() {
   const { tenant } = useAuth();
   const [modality, setModality] = useState("musc");
-  const [templates, setTemplates] = useState(() => getWorkoutTemplates(tenant.id, "musc"));
+  const [templates, setTemplates] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [sendModal, setSendModal] = useState(null);
   const [toast, setToast] = useState("");
   const [duplicatingId, setDuplicatingId] = useState(null);
 
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      const t = await getWorkoutTemplates(tenant.id, modality);
+      if (!cancelled) {
+        setTemplates(t);
+        setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [tenant.id, modality]);
+
   const switchModality = (m) => {
     setModality(m);
-    setTemplates(getWorkoutTemplates(tenant.id, m));
   };
 
   const handleDuplicate = (id) => {
     setDuplicatingId(id);
-    setTimeout(() => {
-      duplicateWorkoutTemplate(id);
-      setTemplates(getWorkoutTemplates(tenant.id, modality));
+    setTimeout(async () => {
+      await duplicateWorkoutTemplate(id);
+      const t = await getWorkoutTemplates(tenant.id, modality);
+      setTemplates(t);
       setDuplicatingId(null);
       setToast("Treino duplicado com sucesso");
       setTimeout(() => setToast(""), 2000);
@@ -50,6 +67,11 @@ export default function PersonalWorkoutLibrary() {
         ))}
       </div>
 
+      {loading ? (
+        <div className="flex items-center justify-center py-16">
+          <Spinner size={24} />
+        </div>
+      ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {templates.map((t) => (
           <Card key={t.id} className="p-4">
@@ -80,6 +102,7 @@ export default function PersonalWorkoutLibrary() {
           </Card>
         ))}
       </div>
+      )}
 
       {sendModal && <SendModal template={sendModal} tenantId={tenant.id} onClose={() => setSendModal(null)} onSent={() => { setToast("Treino enviado com sucesso"); setTimeout(() => setToast(""), 2000); }} />}
 
@@ -93,15 +116,27 @@ export default function PersonalWorkoutLibrary() {
 }
 
 function SendModal({ template, tenantId, onClose, onSent }) {
-  const students = getStudents(tenantId);
+  const [students, setStudents] = useState([]);
   const [picked, setPicked] = useState([]);
   const [sending, setSending] = useState(false);
   const toggle = (id) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
 
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      const s = await getStudents(tenantId);
+      if (!cancelled) setStudents(s);
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [tenantId]);
+
   const handleSend = () => {
     setSending(true);
-    setTimeout(() => {
-      assignTemplateToStudents(template.id, picked);
+    setTimeout(async () => {
+      await assignTemplateToStudents(template.id, picked);
       setSending(false);
       onSent();
       onClose();

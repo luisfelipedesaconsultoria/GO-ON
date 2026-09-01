@@ -13,6 +13,7 @@ import {
   Avatar,
   ForestButton,
   OutlineButton,
+  Spinner,
 } from "../../components/ui";
 import {
   ChevronLeft,
@@ -40,23 +41,52 @@ export default function PersonalStudentDetail() {
   const { studentId } = useParams();
   const { tenant } = useAuth();
   const navigate = useNavigate();
-  const [student, setStudent] = useState(getStudent(studentId));
+  const [student, setStudent] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("overview");
-  const feedback = getWorkoutFeedbackHistory(studentId);
+  const [feedback, setFeedback] = useState([]);
   const [hrHistory, setHrHistory] = useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      const [s, f] = await Promise.all([
+        getStudent(studentId),
+        getWorkoutFeedbackHistory(studentId),
+      ]);
+      if (!cancelled) {
+        setStudent(s);
+        setFeedback(f);
+        setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [studentId]);
 
   useEffect(() => {
     getHRSessionHistory(studentId).then(setHrHistory);
   }, [studentId]);
+
+  if (loading) {
+    return (
+      <div className="p-4 md:p-8 max-w-3xl flex items-center justify-center min-h-[40vh]">
+        <Spinner size={24} />
+      </div>
+    );
+  }
 
   if (!student) return <div className="p-4 md:p-8">Aluno não encontrado.</div>;
 
   const Icon = modalityIcon[student.modality];
   const meta = statusMeta[student.status];
 
-  const toggleSubscription = () => {
+  const toggleSubscription = async () => {
     const next = student.subscriptionStatus === "active" ? "overdue" : "active";
-    const updated = updateStudent(studentId, { subscriptionStatus: next });
+    const updated = await updateStudent(studentId, { subscriptionStatus: next });
     setStudent(updated);
   };
 

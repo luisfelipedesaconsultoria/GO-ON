@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { getWorkoutFeedbackHistory } from "../../lib/db";
 import { Trophy, BarChart3, ArrowUp } from "lucide-react";
@@ -8,11 +8,25 @@ const progressHistory = [62, 65, 64, 68, 70, 72, 75, 74, 78, 80];
 
 export default function AlunoProgress() {
   const { student, isBlocked, brandColor, colors } = useOutletContext();
+  const [feedbackHistory, setFeedbackHistory] = useState([]);
+
+  useEffect(() => {
+    if (!student || isBlocked) return;
+    let cancelled = false;
+    async function load() {
+      const f = await getWorkoutFeedbackHistory(student.id);
+      if (!cancelled) setFeedbackHistory(f);
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [student, isBlocked]);
+
   if (isBlocked) return <BlockedScreen student={student} brandColor={brandColor} colors={colors} />;
 
   const max = Math.max(...progressHistory);
   const min = Math.min(...progressHistory);
-  const feedbackHistory = getWorkoutFeedbackHistory(student.id);
 
   return (
     <div className="px-5 pt-4 page-enter">

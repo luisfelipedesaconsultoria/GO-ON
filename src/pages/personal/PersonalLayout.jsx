@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { Logo } from "../../components/ui";
 import { useAuth } from "../../hooks/useAuth";
@@ -20,8 +20,29 @@ export default function PersonalLayout() {
   const { user, tenant, logout } = useAuth();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
-  const pendingVideos = tenant ? getVideoReviewQueue(tenant.id).filter((v) => v.status === "pending").length : 0;
-  const students = tenant ? getStudents(tenant.id) : [];
+  const [videoQueue, setVideoQueue] = useState([]);
+  const [students, setStudents] = useState([]);
+
+  useEffect(() => {
+    if (!tenant) return;
+    let cancelled = false;
+    async function load() {
+      const [q, s] = await Promise.all([
+        getVideoReviewQueue(tenant.id),
+        getStudents(tenant.id),
+      ]);
+      if (!cancelled) {
+        setVideoQueue(q);
+        setStudents(s);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [tenant]);
+
+  const pendingVideos = videoQueue.filter((v) => v.status === "pending").length;
   const alertCount = students.filter((s) => s.alert).length;
   const brandColor = tenant?.brandColor || "#0B5A28";
 

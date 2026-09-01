@@ -1,20 +1,46 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { getVideoReviewQueue, resolveVideoReview } from "../../lib/db";
-import { ForestButton, OutlineButton, EmptyState } from "../../components/ui";
+import { ForestButton, OutlineButton, EmptyState, Spinner } from "../../components/ui";
 import { Play, Sparkles, Video, CheckCircle2 } from "lucide-react";
 
 export default function PersonalVideoReview() {
   const { tenant } = useAuth();
-  const [queue, setQueue] = useState(() => getVideoReviewQueue(tenant.id));
+  const [queue, setQueue] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [comments, setComments] = useState({});
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      const q = await getVideoReviewQueue(tenant.id);
+      if (!cancelled) {
+        setQueue(q);
+        setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [tenant.id]);
 
   const pending = queue.filter((v) => v.status === "pending");
 
-  const handleResolve = (id, decision) => {
-    resolveVideoReview(id, decision, comments[id] || "");
-    setQueue(getVideoReviewQueue(tenant.id));
+  const handleResolve = async (id, decision) => {
+    await resolveVideoReview(id, decision);
+    const q = await getVideoReviewQueue(tenant.id);
+    setQueue(q);
   };
+
+  if (loading) {
+    return (
+      <div className="p-8 max-w-3xl flex items-center justify-center min-h-[40vh]">
+        <Spinner size={24} />
+      </div>
+    );
+  }
 
   return (
     <div className="p-8 max-w-3xl">

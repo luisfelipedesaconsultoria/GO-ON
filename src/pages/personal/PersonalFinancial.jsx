@@ -1,12 +1,37 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { getFinancials } from "../../lib/db";
-import { Card } from "../../components/ui";
+import { Card, Spinner } from "../../components/ui";
 import { TrendingUp, ArrowUp, ArrowDown } from "lucide-react";
 
 export default function PersonalFinancial() {
   const { tenant } = useAuth();
-  const fin = getFinancials(tenant.id);
+  const [fin, setFin] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      const data = await getFinancials(tenant.id);
+      if (!cancelled) {
+        setFin(data);
+        setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [tenant.id]);
+
+  if (loading) {
+    return (
+      <div className="p-4 md:p-8 flex items-center justify-center min-h-[40vh]">
+        <Spinner size={24} />
+      </div>
+    );
+  }
 
   if (!fin) return <div className="p-4 md:p-8">Sem dados financeiros.</div>;
 

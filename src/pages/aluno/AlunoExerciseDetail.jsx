@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useOutletContext } from "react-router-dom";
 import { getAssignedWorkout, updateExerciseSet, completeExercise, submitVideoForReview } from "../../lib/db";
@@ -20,28 +20,55 @@ export default function AlunoExerciseDetail() {
   const { student, brandColor, colors } = useOutletContext();
   const navigate = useNavigate();
 
-  const workout = getAssignedWorkout(student.id);
-  const exercise = workout?.todayWorkout.exercises.find((e) => e.id === exerciseId);
-
-  const [sets, setSets] = useState(exercise?.sets || []);
+  const [workout, setWorkout] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [sets, setSets] = useState([]);
   const [feedback, setFeedback] = useState(null);
   const [recording, setRecording] = useState(false);
   const [recorded, setRecorded] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [justDoneIdx, setJustDoneIdx] = useState(null);
 
+  useEffect(() => {
+    if (!student) return;
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      const w = await getAssignedWorkout(student.id);
+      if (cancelled) return;
+      setWorkout(w);
+      const ex = w?.todayWorkout.exercises.find((e) => e.id === exerciseId);
+      setSets(ex?.sets || []);
+      setLoading(false);
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [student, exerciseId]);
+
+  const exercise = workout?.todayWorkout.exercises.find((e) => e.id === exerciseId);
+
+  if (loading) {
+    return (
+      <div className="px-5 pt-10 flex items-center justify-center">
+        <Spinner size={24} color={brandColor} />
+      </div>
+    );
+  }
+
   if (!exercise) return <div className="px-5 pt-10 text-ink">Exercício não encontrado.</div>;
 
-  const updateSet = (i, field, delta) => {
+  const updateSet = async (i, field, delta) => {
     const newSets = sets.map((s, idx) => (idx === i ? { ...s, [field]: Math.max(0, s[field] + delta) } : s));
     setSets(newSets);
-    updateExerciseSet(student.id, exerciseId, i, newSets[i]);
+    await updateExerciseSet(student.id, exerciseId, i, newSets[i]);
   };
 
-  const setRir = (i, value) => {
+  const setRir = async (i, value) => {
     const newSets = sets.map((s, idx) => (idx === i ? { ...s, rir: value } : s));
     setSets(newSets);
-    updateExerciseSet(student.id, exerciseId, i, { rir: value });
+    await updateExerciseSet(student.id, exerciseId, i, { rir: value });
     if (value === 0 || value === 1) {
       setJustDoneIdx(i);
       setTimeout(() => setJustDoneIdx(null), 350);
@@ -50,17 +77,17 @@ export default function AlunoExerciseDetail() {
 
   const handleRecord = () => {
     setRecording(true);
-    setTimeout(() => {
+    setTimeout(async () => {
       setRecording(false);
       setRecorded(true);
-      submitVideoForReview(student.id, exercise.name);
+      await submitVideoForReview(student.id, exercise.name);
     }, 700);
   };
 
   const handleComplete = () => {
     setCompleting(true);
-    setTimeout(() => {
-      completeExercise(student.id, exerciseId);
+    setTimeout(async () => {
+      await completeExercise(student.id, exerciseId);
       navigate("/aluno");
     }, 500);
   };
