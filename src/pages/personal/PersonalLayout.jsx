@@ -1,14 +1,15 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { Logo } from "../../components/ui";
 import { useAuth } from "../../hooks/useAuth";
 import { getVideoReviewQueue, getStudents } from "../../lib/db";
-import { LayoutDashboard, Users, Library, Video, MessageSquare, DollarSign, LogOut, Settings, Menu, X } from "lucide-react";
+import { LayoutDashboard, Users, Library, Video, MessageSquare, DollarSign, LogOut, Settings, Menu, X, Radio } from "lucide-react";
 
 const navItems = [
   { to: "/personal", icon: LayoutDashboard, label: "Painel", end: true },
   { to: "/personal/alunos", icon: Users, label: "Alunos" },
   { to: "/personal/treinos", icon: Library, label: "Banco de treinos" },
+  { to: "/personal/monitor-ao-vivo", icon: Radio, label: "Monitor ao vivo" },
   { to: "/personal/videos", icon: Video, label: "Análise de vídeo" },
   { to: "/personal/chat", icon: MessageSquare, label: "Mensagens" },
   { to: "/personal/financeiro", icon: DollarSign, label: "Financeiro" },
@@ -19,8 +20,29 @@ export default function PersonalLayout() {
   const { user, tenant, logout } = useAuth();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
-  const pendingVideos = tenant ? getVideoReviewQueue(tenant.id).filter((v) => v.status === "pending").length : 0;
-  const students = tenant ? getStudents(tenant.id) : [];
+  const [videoQueue, setVideoQueue] = useState([]);
+  const [students, setStudents] = useState([]);
+
+  useEffect(() => {
+    if (!tenant) return;
+    let cancelled = false;
+    async function load() {
+      const [q, s] = await Promise.all([
+        getVideoReviewQueue(tenant.id),
+        getStudents(tenant.id),
+      ]);
+      if (!cancelled) {
+        setVideoQueue(q);
+        setStudents(s);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [tenant]);
+
+  const pendingVideos = videoQueue.filter((v) => v.status === "pending").length;
   const alertCount = students.filter((s) => s.alert).length;
   const brandColor = tenant?.brandColor || "#0B5A28";
 

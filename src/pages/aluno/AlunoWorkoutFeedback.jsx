@@ -10,8 +10,8 @@ export default function AlunoWorkoutFeedback() {
   const [energy, setEnergy] = useState(4);
   const [pain, setPain] = useState(false);
 
-  const handleSubmit = () => {
-    submitWorkoutFeedback(student.id, { rating, energy, pain });
+  const handleSubmit = async () => {
+    await submitWorkoutFeedback(student.id, { rating, energy, pain });
     navigate("/aluno");
   };
 

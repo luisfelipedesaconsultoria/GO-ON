@@ -1,14 +1,15 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { getStudent } from "../../lib/db";
 import { getBrandScale } from "../../lib/colorUtils";
-import { Logo } from "../../components/ui";
-import { Dumbbell, Activity, TrendingUp, MessageSquare, LogOut, ClipboardList } from "lucide-react";
+import { Logo, Spinner } from "../../components/ui";
+import { Dumbbell, Activity, TrendingUp, MessageSquare, LogOut, ClipboardList, Heart } from "lucide-react";
 
 const navItems = [
   { to: "/aluno", icon: Dumbbell, label: "Treino", end: true },
   { to: "/aluno/corrida", icon: Activity, label: "Corrida" },
+  { to: "/aluno/frequencia", icon: Heart, label: "Cardio" },
   { to: "/aluno/progresso", icon: TrendingUp, label: "Progresso" },
   { to: "/aluno/avaliacoes", icon: ClipboardList, label: "Avaliação" },
   { to: "/aluno/chat", icon: MessageSquare, label: "Chat" },
@@ -17,13 +18,31 @@ const navItems = [
 export default function AlunoLayout() {
   const { user, tenant, logout } = useAuth();
   const navigate = useNavigate();
-  const student = getStudent(user.studentId);
+  const [student, setStudent] = useState(null);
+  const [loadingStudent, setLoadingStudent] = useState(true);
   const brandColor = tenant?.brandColor || "#0B5A28";
   const appName = tenant?.appName || "Personal de Sucesso";
   const logoUrl = tenant?.logoUrl || null;
   const colors = getBrandScale(brandColor);
 
   const isBlocked = student?.subscriptionStatus === "overdue";
+
+  useEffect(() => {
+    if (!user?.studentId) return;
+    let cancelled = false;
+    async function load() {
+      setLoadingStudent(true);
+      const s = await getStudent(user.studentId);
+      if (!cancelled) {
+        setStudent(s);
+        setLoadingStudent(false);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.studentId]);
 
   return (
     <div className="min-h-screen bg-white pb-24">
@@ -42,7 +61,13 @@ export default function AlunoLayout() {
           </button>
         </div>
 
-        <Outlet context={{ student, isBlocked, brandColor, appName, logoUrl, colors }} />
+        {loadingStudent ? (
+          <div className="flex items-center justify-center min-h-[50vh]">
+            <Spinner size={24} color={brandColor} />
+          </div>
+        ) : (
+          <Outlet context={{ student, isBlocked, brandColor, appName, logoUrl, colors }} />
+        )}
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-black/8 px-4 py-3 flex justify-around max-w-md mx-auto">

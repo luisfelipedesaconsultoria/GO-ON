@@ -1,8 +1,8 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { getStudents, getVideoReviewQueue } from "../../lib/db";
-import { Card, Badge, Avatar } from "../../components/ui";
+import { Card, Badge, Avatar, Spinner } from "../../components/ui";
 import {
   Users,
   TrendingUp,
@@ -22,14 +22,45 @@ const statusMeta = {
 export default function PersonalDashboard() {
   const { tenant } = useAuth();
   const navigate = useNavigate();
-  const students = getStudents(tenant.id);
-  const pendingVideos = getVideoReviewQueue(tenant.id).filter(
-    (v) => v.status === "pending"
-  );
-  const avgAdherence = Math.round(
-    students.reduce((acc, s) => acc + s.adherence, 0) / students.length
-  );
+  const [students, setStudents] = useState([]);
+  const [videoQueue, setVideoQueue] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      const [s, q] = await Promise.all([
+        getStudents(tenant.id),
+        getVideoReviewQueue(tenant.id),
+      ]);
+      if (!cancelled) {
+        setStudents(s);
+        setVideoQueue(q);
+        setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [tenant.id]);
+
+  const pendingVideos = videoQueue.filter((v) => v.status === "pending");
+  const avgAdherence = students.length
+    ? Math.round(
+        students.reduce((acc, s) => acc + s.adherence, 0) / students.length
+      )
+    : 0;
   const needsAttention = students.filter((s) => s.alert);
+
+  if (loading) {
+    return (
+      <div className="p-4 md:p-8 max-w-6xl flex items-center justify-center min-h-[40vh]">
+        <Spinner size={24} />
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 md:p-8 max-w-6xl">

@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { getStudents } from "../../lib/db";
-import { Card, Badge, Avatar } from "../../components/ui";
+import { Card, Badge, Avatar, Spinner } from "../../components/ui";
 import { Search, Plus, Dumbbell, Activity, Zap, ChevronRight, AlertCircle } from "lucide-react";
 
 const statusMeta = {
@@ -16,7 +16,34 @@ export default function PersonalStudents() {
   const { tenant } = useAuth();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
-  const students = getStudents(tenant.id).filter((s) => s.name.toLowerCase().includes(search.toLowerCase()));
+  const [allStudents, setAllStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      const s = await getStudents(tenant.id);
+      if (!cancelled) {
+        setAllStudents(s);
+        setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [tenant.id]);
+
+  const students = allStudents.filter((s) => s.name.toLowerCase().includes(search.toLowerCase()));
+
+  if (loading) {
+    return (
+      <div className="p-8 max-w-5xl flex items-center justify-center min-h-[40vh]">
+        <Spinner size={24} />
+      </div>
+    );
+  }
 
   return (
     <div className="p-8 max-w-5xl">

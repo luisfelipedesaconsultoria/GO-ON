@@ -22,6 +22,7 @@ import PersonalVideoReview from "./pages/personal/PersonalVideoReview";
 import PersonalChat from "./pages/personal/PersonalChat";
 import PersonalFinancial from "./pages/personal/PersonalFinancial";
 import PersonalSettings from "./pages/personal/PersonalSettings";
+import PersonalLiveSession from "./pages/personal/PersonalLiveSession";
 
 import AlunoLayout from "./pages/aluno/AlunoLayout";
 import AlunoToday from "./pages/aluno/AlunoToday";
@@ -31,6 +32,7 @@ import AlunoRunning from "./pages/aluno/AlunoRunning";
 import AlunoProgress from "./pages/aluno/AlunoProgress";
 import AlunoAssessments from "./pages/aluno/AlunoAssessments";
 import AlunoChat from "./pages/aluno/AlunoChat";
+import AlunoHeartRate from "./pages/aluno/AlunoHeartRate";
 
 function RequireRole({ role, children }) {
   const { user, loading } = useAuth();
@@ -47,10 +49,6 @@ function RequireRole({ role, children }) {
   if (user.role !== role) return <Navigate to="/" replace />;
   return children;
 }
-const { user } = useAuth();
-if (!user) return <Navigate to="/" replace />;
-if (user.role !== role) return <Navigate to="/" replace />;
-return children;
 
 function AppRoutes() {
   return (
@@ -91,6 +89,7 @@ function AppRoutes() {
         <Route path="treinos" element={<PersonalWorkoutLibrary />} />
         <Route path="videos" element={<PersonalVideoReview />} />
         <Route path="chat" element={<PersonalChat />} />
+        <Route path="monitor-ao-vivo" element={<PersonalLiveSession />} />
         <Route path="financeiro" element={<PersonalFinancial />} />
         <Route path="configuracoes" element={<PersonalSettings />} />
       </Route>
@@ -107,6 +106,7 @@ function AppRoutes() {
         <Route path="exercicio/:exerciseId" element={<AlunoExerciseDetail />} />
         <Route path="feedback-treino" element={<AlunoWorkoutFeedback />} />
         <Route path="corrida" element={<AlunoRunning />} />
+        <Route path="frequencia" element={<AlunoHeartRate />} />
         <Route path="progresso" element={<AlunoProgress />} />
         <Route path="avaliacoes" element={<AlunoAssessments />} />
         <Route path="chat" element={<AlunoChat />} />
