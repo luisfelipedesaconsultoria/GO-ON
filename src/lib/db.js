@@ -390,6 +390,13 @@ export async function approveVideoReview(reviewId) {
     .eq("id", reviewId);
 }
 
+export async function resolveVideoReview(reviewId, decision, comment) {
+  await supabase
+    .from("video_review_queue")
+    .update({ status: decision, comment: comment || null })
+    .eq("id", reviewId);
+}
+
 export async function getChatThread(studentId) {
   const { data } = await supabase
     .from("chat_messages")
@@ -443,6 +450,61 @@ export async function submitWorkoutFeedback(studentId, feedback) {
     .from("students")
     .update({ last_session_at: new Date() })
     .eq("id", studentId);
+}
+
+const mapHRSession = (h) =>
+  h
+    ? {
+        id: h.id,
+        studentId: h.student_id,
+        mode: h.mode,
+        roomCode: h.room_code,
+        deviceName: h.device_name,
+        avgBpm: h.avg_bpm,
+        maxBpm: h.max_bpm,
+        minBpm: h.min_bpm,
+        calories: h.calories,
+        durationSec: h.duration_sec,
+        createdAt: h.created_at,
+      }
+    : null;
+
+// Salva o resumo de uma sessão de monitoramento cardíaco (individual ou em turma).
+// Requer a tabela `hr_sessions` (ver migração em supabase/migrations). Se ela ainda
+// não existir no projeto, falha silenciosamente para não quebrar a experiência ao vivo.
+export async function saveHRSession(studentId, tenantId, summary) {
+  try {
+    await supabase.from("hr_sessions").insert({
+      student_id: studentId,
+      tenant_id: tenantId,
+      mode: summary.mode || "individual",
+      room_code: summary.roomCode || null,
+      device_name: summary.deviceName,
+      avg_bpm: summary.avgBpm,
+      max_bpm: summary.maxBpm,
+      min_bpm: summary.minBpm,
+      calories: summary.calories,
+      duration_sec: summary.durationSec,
+    });
+  } catch (e) {
+    console.warn("Não foi possível salvar a sessão de frequência cardíaca:", e.message);
+  }
+}
+
+export async function getHRSessionHistory(studentId) {
+  try {
+    const { data, error } = await supabase
+      .from("hr_sessions")
+      .select("*")
+      .eq("student_id", studentId)
+      .order("created_at", { ascending: false })
+      .limit(20);
+    if (error) throw error;
+    return (data || []).map(mapHRSession);
+  } catch (e) {
+    console.warn("Não foi possível carregar o histórico de frequência cardíaca:", e.message);
+    return [];
+  }
 }
 
 export async function getFinancials(tenantId) {

@@ -3,12 +3,13 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { Logo } from "../../components/ui";
 import { useAuth } from "../../hooks/useAuth";
 import { getVideoReviewQueue, getStudents } from "../../lib/db";
-import { LayoutDashboard, Users, Library, Video, MessageSquare, DollarSign, LogOut, Settings, Menu, X } from "lucide-react";
+import { LayoutDashboard, Users, Library, Video, MessageSquare, DollarSign, LogOut, Settings, Menu, X, Radio } from "lucide-react";
 
 const navItems = [
   { to: "/personal", icon: LayoutDashboard, label: "Painel", end: true },
   { to: "/personal/alunos", icon: Users, label: "Alunos" },
   { to: "/personal/treinos", icon: Library, label: "Banco de treinos" },
+  { to: "/personal/monitor-ao-vivo", icon: Radio, label: "Monitor ao vivo" },
   { to: "/personal/videos", icon: Video, label: "Análise de vídeo" },
   { to: "/personal/chat", icon: MessageSquare, label: "Mensagens" },
   { to: "/personal/financeiro", icon: DollarSign, label: "Financeiro" },

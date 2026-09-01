@@ -4,11 +4,12 @@ import { useAuth } from "../../hooks/useAuth";
 import { getStudent } from "../../lib/db";
 import { getBrandScale } from "../../lib/colorUtils";
 import { Logo } from "../../components/ui";
-import { Dumbbell, Activity, TrendingUp, MessageSquare, LogOut, ClipboardList } from "lucide-react";
+import { Dumbbell, Activity, TrendingUp, MessageSquare, LogOut, ClipboardList, Heart } from "lucide-react";
 
 const navItems = [
   { to: "/aluno", icon: Dumbbell, label: "Treino", end: true },
   { to: "/aluno/corrida", icon: Activity, label: "Corrida" },
+  { to: "/aluno/frequencia", icon: Heart, label: "Cardio" },
   { to: "/aluno/progresso", icon: TrendingUp, label: "Progresso" },
   { to: "/aluno/avaliacoes", icon: ClipboardList, label: "Avaliação" },
   { to: "/aluno/chat", icon: MessageSquare, label: "Chat" },

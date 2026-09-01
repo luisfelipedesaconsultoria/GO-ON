@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import {
   getStudent,
   updateStudent,
   getWorkoutFeedbackHistory,
+  getHRSessionHistory,
 } from "../../lib/db";
 import {
   Card,
@@ -25,6 +26,7 @@ import {
   ClipboardList,
   Lock,
   Unlock,
+  HeartPulse,
 } from "lucide-react";
 
 const modalityIcon = { musc: Dumbbell, run: Activity, both: Zap };
@@ -41,6 +43,11 @@ export default function PersonalStudentDetail() {
   const [student, setStudent] = useState(getStudent(studentId));
   const [tab, setTab] = useState("overview");
   const feedback = getWorkoutFeedbackHistory(studentId);
+  const [hrHistory, setHrHistory] = useState([]);
+
+  useEffect(() => {
+    getHRSessionHistory(studentId).then(setHrHistory);
+  }, [studentId]);
 
   if (!student) return <div className="p-4 md:p-8">Aluno não encontrado.</div>;
 
@@ -116,6 +123,7 @@ export default function PersonalStudentDetail() {
           { id: "overview", label: "Visão geral" },
           { id: "anamnese", label: "Anamnese" },
           { id: "historico", label: "Histórico de treinos" },
+          { id: "cardio", label: "Frequência cardíaca" },
         ].map((t) => (
           <button
             key={t.id}
@@ -259,6 +267,37 @@ export default function PersonalStudentDetail() {
                       Relatou dor/desconforto
                     </p>
                   )}
+                </div>
+              </div>
+            ))
+          )}
+        </Card>
+      )}
+
+      {tab === "cardio" && (
+        <Card className="overflow-hidden">
+          {hrHistory.length === 0 ? (
+            <div className="p-6 text-center text-sm text-stone flex flex-col items-center gap-2">
+              <HeartPulse size={22} className="text-stone" />
+              Nenhuma sessão com bracelete Bluetooth registrada ainda.
+            </div>
+          ) : (
+            hrHistory.map((h, i) => (
+              <div
+                key={h.id}
+                className={`flex items-center gap-4 p-4 ${i > 0 ? "border-t border-black/6" : ""}`}
+              >
+                <div className="text-xs text-stone w-20 flex-shrink-0">
+                  {new Date(h.createdAt).toLocaleDateString("pt-BR")}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-ink">
+                    Média {h.avgBpm ?? "--"}bpm · Máx {h.maxBpm ?? "--"}bpm · {h.calories ?? 0} kcal
+                  </p>
+                  <p className="text-xs text-stone">
+                    {h.mode === "team" ? `Turma (${h.roomCode})` : "Individual"} ·{" "}
+                    {Math.floor((h.durationSec || 0) / 60)}min · {h.deviceName || "dispositivo Bluetooth"}
+                  </p>
                 </div>
               </div>
             ))
